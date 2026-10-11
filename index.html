@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WheezeDetect — AI Respiratory Sound Analysis</title>
+<meta name="description" content="WheezeDetect is a research prototype using an Extra Trees Classifier to analyze respiratory audio recordings for wheeze-like acoustic patterns.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=3.2">
+<script src="lucide.min.js"></script>
+<script src="script.js?v=3.2" defer></script>
+</head>
+<body>
+
+<!-- ======= MOBILE TOPBAR ======= -->
+<header class="mobile-topbar" id="mobileTopbar">
+  <button class="menu-btn" id="menuBtn" aria-label="Toggle navigation" aria-expanded="false">
+    <i data-lucide="menu"></i>
+  </button>
+  <div class="mobile-brand">
+    <img src="logo.svg" width="28" height="28" alt="WheezeDetect lungs logo">
+    <span>Wheeze<b>Detect</b></span>
+  </div>
+</header>
+
+<!-- Sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ======= SIDEBAR ======= -->
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+  <div class="brand">
+    <img src="logo.svg" width="40" height="40" alt="WheezeDetect lungs-waveform logo" class="brand-logo">
+    <div class="brand-text">
+      <h1>Wheeze<span>Detect</span></h1>
+      <p>AI Sound Analysis</p>
+    </div>
+  </div>
+
+  <nav aria-label="Main">
+    <a href="#dashboard" class="active" id="nav-dashboard">
+      <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+    <a href="#analyze" id="nav-analyze">
+      <span class="nav-icon"><i data-lucide="activity"></i></span>
+      <span class="nav-label">Analyze Audio</span>
+    </a>
+    <a href="#history" id="nav-history">
+      <span class="nav-icon"><i data-lucide="clock"></i></span>
+      <span class="nav-label">History</span>
+    </a>
+    <a href="#about" id="nav-about">
+      <span class="nav-icon"><i data-lucide="book-open"></i></span>
+      <span class="nav-label">About Model</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="research-badge">
+      <i data-lucide="flask-conical"></i>
+      <div>
+        <strong>Research Prototype</strong>
+        <p>Not a medical device. For study purposes only.</p>
+      </div>
+    </div>
+    <div class="status-indicator" id="backendStatus">
+      <span class="status-dot"></span>
+      <span class="status-text">Backend offline</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ======= MAIN ======= -->
+<main id="mainContent">
+
+  <!-- ===== DASHBOARD ===== -->
+  <section id="dashboard" class="view" aria-labelledby="dashTitle">
+    <div class="page-head">
+      <div class="page-head-text">
+        <h2 id="dashTitle">Dashboard</h2>
+        <p>Overview of your respiratory sound analysis sessions.</p>
+      </div>
+      <span class="proto-badge"><i data-lucide="flask-conical"></i> Research Prototype</span>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card" aria-label="Total analyses">
+        <div class="stat-icon cyan"><i data-lucide="files"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Total Analyses</span>
+          <strong class="stat-value" id="stTotal">0</strong>
+        </div>
+      </div>
+      <div class="stat-card" aria-label="Wheeze-like patterns detected">
+        <div class="stat-icon red"><i data-lucide="wind"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Wheeze Patterns</span>
+          <strong class="stat-value" id="stWheeze">0</strong>
+        </div>
+      </div>
+      <div class="stat-card" aria-label="No wheeze detected">
+        <div class="stat-icon green"><i data-lucide="check-circle-2"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Clear Recordings</span>
+          <strong class="stat-value" id="stNone">0</strong>
+        </div>
+      </div>
+      <div class="stat-card" aria-label="Latest model score">
+        <div class="stat-icon indigo"><i data-lucide="gauge"></i></div>
+        <div class="stat-body">
+          <span class="stat-label">Latest Score</span>
+          <strong class="stat-value" id="stScore">—</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <article class="card full-h" aria-labelledby="recentTitle">
+        <div class="card-header">
+          <h3 id="recentTitle"><i data-lucide="history"></i> Recent Analyses</h3>
+          <a href="#history" class="card-link">View all <i data-lucide="arrow-right"></i></a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>File</th><th>Date</th><th>Prediction</th><th>Score</th><th>Source</th></tr></thead>
+            <tbody id="dashBody"></tbody>
+          </table>
+        </div>
+        <p class="empty-sm" id="dashEmpty">No analyses yet. Upload a WAV file to get started.</p>
+      </article>
+
+      <aside class="card quick-actions" aria-labelledby="actionsTitle">
+        <div class="card-header">
+          <h3 id="actionsTitle"><i data-lucide="zap"></i> Quick Actions</h3>
+        </div>
+        <p class="sub" id="dashLatest">No analyses yet.</p>
+        <div class="action-btns">
+          <button class="btn btn-primary" data-nav="analyze"><i data-lucide="audio-lines"></i> Analyze Audio</button>
+          <button class="btn btn-ghost" data-nav="history"><i data-lucide="clock"></i> View History</button>
+        </div>
+        <div class="wave-container" aria-hidden="true">
+          <svg class="mini-wave" viewBox="0 0 300 60" fill="none">
+            <path class="wave-path wave-1" d="M0 30h45l6-18 9 38 7-28 6 18 5-8h40l6-18 9 38 7-28 6 18 5-8h40l6-18 9 38 7-28 6 18 5-8h40"/>
+            <path class="wave-path wave-2" d="M0 38h50l4-10 6 22 5-18 4 10 3-5h45l4-10 6 22 5-18 4 10 3-5h45l4-10 6 22 5-18 4 10 3-5h45"/>
+          </svg>
+        </div>
+        <div class="info-pill">
+          <i data-lucide="info"></i>
+          <span>Threshold: <b>0.225</b> · Top-1 aggregation</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===== ANALYZE ===== -->
+  <section id="analyze" class="view" aria-labelledby="analyzeTitle">
+    <div class="page-head">
+      <div class="page-head-text">
+        <h2 id="analyzeTitle">Analyze Audio</h2>
+        <p>Upload a WAV recording to view its waveform and run the segment-based ML analysis.</p>
+      </div>
+    </div>
+
+    <!-- Row 1: Upload (left) + Result (right) -->
+    <div class="analyze-top-grid">
+
+      <!-- Upload panel -->
+      <article class="card" aria-labelledby="uploadTitle">
+        <div class="card-header">
+          <h3 id="uploadTitle"><i data-lucide="upload-cloud"></i> Upload &amp; Analyze</h3>
+        </div>
+        <p class="sub">Supports WAV files (16 kHz recommended, max 50 MB).</p>
+
+        <div class="drop-zone" id="drop" tabindex="0" role="button" aria-label="Drop WAV file here or press Enter to browse">
+          <div class="drop-icon"><i data-lucide="cloud-upload"></i></div>
+          <p class="drop-title">Drag &amp; drop your WAV file</p>
+          <p class="drop-sub">or</p>
+          <button class="btn btn-secondary" id="browseBtn" type="button"><i data-lucide="folder-open"></i> Choose File</button>
+          <small class="drop-hint">WAV · max 50 MB</small>
+          <input type="file" id="fileInput" accept=".wav,audio/wav,audio/x-wav" hidden>
+        </div>
+
+        <p class="msg" id="fileMsg" role="alert"></p>
+
+        <!-- File preview -->
+        <div class="file-preview" id="fileBox" hidden>
+          <div class="file-preview-top">
+            <div class="file-icon"><i data-lucide="music"></i></div>
+            <div class="file-info">
+              <strong id="fName"></strong>
+              <small id="fMeta"></small>
+            </div>
+            <button class="icon-btn danger" id="removeBtn" aria-label="Remove file"><i data-lucide="x"></i></button>
+          </div>
+          <audio id="player" controls aria-label="Audio playback"></audio>
+        </div>
+
+        <!-- Demo toggle -->
+        <label class="demo-toggle">
+          <input type="checkbox" id="demoToggle">
+          <span class="toggle-track"></span>
+          <span class="toggle-label">Demo mode <em>(simulated — not a real prediction)</em></span>
+        </label>
+
+        <!-- Analyze button -->
+        <button class="btn btn-analyze" id="analyzeBtn" disabled>
+          <i data-lucide="audio-lines"></i>
+          <span id="analyzeLabel">Analyze Audio</span>
+        </button>
+
+        <div class="progress-wrap" id="progress" hidden>
+          <div class="progress-bar" id="bar"></div>
+        </div>
+        <small id="status" class="status-text-sm" aria-live="polite"></small>
+      </article>
+
+      <!-- Result panel -->
+      <article class="card" id="resultCard" aria-labelledby="resultTitle">
+        <div class="card-header">
+          <h3 id="resultTitle"><i data-lucide="bar-chart-3"></i> Analysis Result</h3>
+          <small id="when" class="ts-label"></small>
+        </div>
+
+        <div class="empty-state" id="resultEmpty">
+          <div class="empty-icon"><i data-lucide="file-audio"></i></div>
+          <p>No analysis yet.</p>
+          <span>Upload a WAV file and press <strong>Analyze Audio</strong>.</span>
+        </div>
+
+        <div id="resultBody" hidden>
+          <!-- Verdict -->
+          <div class="verdict" id="verdict">
+            <div class="verdict-icon"><i data-lucide="wind" id="verdictIcon"></i></div>
+            <div class="verdict-main">
+              <h4 id="vLabel"></h4>
+              <p id="vText"></p>
+              <span class="tag" id="vSource"></span>
+            </div>
+            <div class="score-box">
+              <small>Model Score</small>
+              <b id="vScore"></b>
+              <small id="vThr"></small>
+            </div>
+          </div>
+
+          <!-- Meta stats -->
+          <div class="result-stats">
+            <div class="rstat"><i data-lucide="clock-3"></i><small>Duration</small><b id="sDur"></b></div>
+            <div class="rstat"><i data-lucide="layers"></i><small>Segments</small><b id="sSeg"></b></div>
+            <div class="rstat"><i data-lucide="cpu"></i><small>Model</small><b id="sModel"></b></div>
+          </div>
+
+          <p class="disclaimer">The model score is not a calibrated medical probability.</p>
+          <button class="btn btn-ghost btn-sm" id="printBtn"><i data-lucide="printer"></i> Print Result</button>
+        </div>
+      </article>
+    </div><!-- /analyze-top-grid -->
+
+    <!-- Row 2: Audio Waveform (full width) -->
+    <article class="card waveform-card" id="waveformCard" aria-labelledby="waveformTitle">
+      <div class="card-header">
+        <h3 id="waveformTitle"><i data-lucide="radio"></i> Audio Waveform</h3>
+        <div class="waveform-controls" id="waveformControls" hidden>
+          <span class="time-display">
+            <span id="wfCurrentTime">0.0</span> / <span id="wfDuration">0.0</span> s
+          </span>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="wf-empty" id="wfEmpty">
+        <i data-lucide="radio"></i>
+        <p>Waveform will appear here once you select a WAV file.</p>
+        <small>Shows actual audio amplitude — does not indicate wheeze presence.</small>
+      </div>
+
+      <!-- Loading indicator -->
+      <div class="wf-loading" id="wfLoading" hidden>
+        <div class="wf-spinner"></div>
+        <span>Decoding audio…</span>
+      </div>
+
+      <!-- Canvas -->
+      <div class="waveform-wrap" id="waveformWrap" hidden>
+        <canvas id="waveformCanvas" aria-label="Audio waveform visualization"></canvas>
+        <div class="wf-axis-x" id="wfAxisX" aria-hidden="true"></div>
+      </div>
+
+      <p class="wf-disclaimer" id="wfDisclaimer" hidden>
+        <i data-lucide="info"></i>
+        This waveform shows raw audio amplitude over time. It does not identify wheeze regions — use the Model Analysis result for clinical inference.
+      </p>
+    </article>
+
+    <!-- Row 3: Segment Score Chart (full width) -->
+    <article class="card" id="segChartCard" aria-labelledby="segChartTitle">
+      <div class="card-header">
+        <h3 id="segChartTitle"><i data-lucide="bar-chart-3"></i> Model Segment Scores</h3>
+        <div class="chart-legend">
+          <span class="legend-dot above"></span> Above threshold
+          <span class="legend-dot below"></span> Below threshold
+        </div>
+      </div>
+      <div id="chart">
+        <p class="empty-sm">Segment scores will appear here after analysis.</p>
+      </div>
+    </article>
+
+  </section><!-- /analyze -->
+
+  <!-- ===== HISTORY ===== -->
+  <section id="history" class="view" aria-labelledby="historyTitle">
+    <div class="page-head">
+      <div class="page-head-text">
+        <h2 id="historyTitle">Analysis History</h2>
+        <p id="histCount">0 records</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn btn-teal" id="exportBtn"><i data-lucide="file-down"></i> Export CSV</button>
+        <button class="btn btn-danger" id="clearBtn"><i data-lucide="trash-2"></i> Clear History</button>
+      </div>
+    </div>
+    <article class="card">
+      <div class="tools">
+        <div class="search-wrap">
+          <i data-lucide="search"></i>
+          <input type="search" id="search" placeholder="Search filename…" aria-label="Search by filename">
+        </div>
+        <select id="filter" aria-label="Filter by prediction" class="select-styled">
+          <option value="all">All results</option>
+          <option value="wheeze">Wheeze detected</option>
+          <option value="none">No wheeze</option>
+        </select>
+        <select id="sort" aria-label="Sort" class="select-styled">
+          <option value="new">Newest first</option>
+          <option value="old">Oldest first</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>File</th><th>Date</th><th>Prediction</th><th>Score</th><th>Duration</th><th>Segments</th><th>Source</th><th><span class="sr">Actions</span></th></tr>
+          </thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+      <p class="empty-sm" id="histEmpty">No saved analyses yet.</p>
+    </article>
+  </section>
+
+  <!-- ===== ABOUT ===== -->
+  <section id="about" class="view" aria-labelledby="aboutTitle">
+    <div class="page-head">
+      <div class="page-head-text">
+        <h2 id="aboutTitle">About Model</h2>
+        <p>Experimental respiratory sound classifier — research prototype.</p>
+      </div>
+    </div>
+
+    <div class="about-grid">
+      <article class="card" aria-labelledby="classifierTitle">
+        <div class="card-header"><h3 id="classifierTitle"><i data-lucide="brain"></i> Extra Trees Classifier</h3></div>
+        <p class="sub">An ensemble of randomized decision trees that scores each 2-second audio segment using 264 extracted acoustic features. Feature extraction and classification run entirely in the Python backend.</p>
+      </article>
+
+      <article class="card" aria-labelledby="featTitle">
+        <div class="card-header"><h3 id="featTitle"><i data-lucide="audio-lines"></i> Feature Extraction</h3></div>
+        <ul class="feat-list">
+          <li><i data-lucide="check"></i> 40 MFCC coefficients (mean &amp; std dev)</li>
+          <li><i data-lucide="check"></i> Delta and delta-delta MFCC features</li>
+          <li><i data-lucide="check"></i> Spectral centroid, bandwidth, rolloff</li>
+          <li><i data-lucide="check"></i> Zero-crossing rate and RMS energy</li>
+          <li><i data-lucide="check"></i> Spectral contrast features</li>
+        </ul>
+      </article>
+
+      <article class="card" aria-labelledby="procTitle">
+        <div class="card-header"><h3 id="procTitle"><i data-lucide="sliders-horizontal"></i> Audio Processing</h3></div>
+        <div class="kv-grid">
+          <span>Sample rate</span><b>16 kHz</b>
+          <span>Window size</span><b>2 seconds</b>
+          <span>Stride</span><b>1 second</b>
+          <span>Threshold</span><b>0.225</b>
+          <span>Aggregation</span><b>Top-1 segment score</b>
+          <span>Resampling</span><b>soxr_hq</b>
+        </div>
+      </article>
+
+      <article class="card" aria-labelledby="metricsTitle">
+        <div class="card-header"><h3 id="metricsTitle"><i data-lucide="bar-chart-3"></i> Held-out Test Metrics</h3></div>
+        <div class="metrics-grid">
+          <div class="metric-card"><b>57.50%</b><small>Accuracy</small></div>
+          <div class="metric-card"><b>55.07%</b><small>Precision</small></div>
+          <div class="metric-card"><b>92.68%</b><small>Recall</small></div>
+          <div class="metric-card"><b>69.09%</b><small>F1-Score</small></div>
+        </div>
+      </article>
+    </div>
+
+    <article class="card limits-card" aria-labelledby="limitsTitle">
+      <div class="card-header"><h3 id="limitsTitle"><i data-lucide="triangle-alert"></i> Limitations &amp; Disclaimer</h3></div>
+      <p class="warn-text">
+        These are experimental held-out test-set results on the Kaggle Respiratory Sound Database.
+        False positives occur, and these metrics are <strong>not evidence of clinical reliability</strong>.
+        WheezeDetect is a <strong>research prototype, not a medical diagnostic device</strong>.
+        Its output should never replace professional medical assessment.
+      </p>
+    </article>
+  </section>
+
+</main>
+
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+</body>
+</html>

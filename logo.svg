@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" aria-label="WheezeDetect logo — lungs with waveform">
+  <!-- Left lung lobe -->
+  <path d="M22 6v14c-4 0-8 6-9 14-1 6-5 8-8 6-3-3 0-18 5-26 3-5 8-7 12-8z" fill="#22D3EE" opacity=".9"/>
+  <!-- Right lung lobe -->
+  <path d="M26 6v14c4 0 8 6 9 14 1 6 5 8 8 6 3-3 0-18-5-26-3-5-8-7-12-8z" fill="#6366F1" opacity=".9"/>
+  <!-- Trachea/stem -->
+  <rect x="22.5" y="4" width="3" height="10" rx="1.5" fill="#22D3EE" opacity=".7"/>
+  <!-- Waveform pulse on top of lungs -->
+  <polyline points="10,26 13,26 15,21 17,31 19,24 21,26 27,26 29,21 31,31 33,24 35,26 38,26"
+            fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+</svg>
